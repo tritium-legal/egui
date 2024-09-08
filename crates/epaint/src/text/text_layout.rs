@@ -221,6 +221,7 @@ fn rows_from_paragraphs(
         let is_last_paragraph = (i + 1) == num_paragraphs;
 
         if paragraph.glyphs.is_empty() {
+            println!("paragraph.glyphs.is_empty()");
             rows.push(Row {
                 section_index_at_start: paragraph.section_index_at_start,
                 glyphs: vec![],
@@ -495,7 +496,7 @@ fn replace_last_glyph_with_overflow_character(
 ///
 /// /// Ignores the Y coordinate.
 fn halign_and_justify_row(
-    leading_identation: f32,
+    leading_indentation: f32,
     point_scale: PointScale,
     row: &mut Row,
     halign: Align,
@@ -528,7 +529,7 @@ fn halign_and_justify_row(
     let num_glyphs_in_range = glyph_range.1 - glyph_range.0;
     assert!(num_glyphs_in_range > 0);
 
-    let original_min_x = row.glyphs[glyph_range.0].logical_rect().min.x - leading_identation;
+    let original_min_x = row.glyphs[glyph_range.0].logical_rect().min.x - leading_indentation;
     let original_max_x = row.glyphs[glyph_range.1 - 1].logical_rect().max.x;
     let original_width = original_max_x - original_min_x;
 
