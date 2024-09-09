@@ -221,7 +221,6 @@ fn rows_from_paragraphs(
         let is_last_paragraph = (i + 1) == num_paragraphs;
 
         if paragraph.glyphs.is_empty() {
-            println!("paragraph.glyphs.is_empty()");
             rows.push(Row {
                 section_index_at_start: paragraph.section_index_at_start,
                 glyphs: vec![],
