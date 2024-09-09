@@ -25,7 +25,7 @@ version = "0.27.2"
 opt-level = 2 # fast and small wasm, basically same as `opt-level = 's'`
 # opt-level = 3 # unnecessarily large wasm for no performance gain
 
-# debug = true # include debug symbols, useful when profiling wasm
+debug = true # include debug symbols, useful when profiling wasm
 
 panic = "abort" # This leads to better optimizations and smaller binaries (and is the default in Wasm anyways).
 
