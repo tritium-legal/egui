@@ -216,10 +216,6 @@ impl FontImpl {
         let glyph_id = self.ab_glyph_font.glyph_id(c);
 
         if glyph_id.0 == 0 {
-            println!(
-                "unsupported character for {:?}: {} ({})",
-                self.name, c, c as u32
-            );
             None // unsupported character
         } else {
             let glyph_info = self.allocate_glyph(glyph_id);
