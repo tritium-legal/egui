@@ -663,6 +663,7 @@ fn galley_from_rows(
 struct FormatSummary {
     any_background: bool,
     any_underline: bool,
+    any_double_underline: bool,
     any_strikethrough: bool,
 }
 
@@ -671,6 +672,7 @@ fn format_summary(job: &LayoutJob) -> FormatSummary {
     for section in &job.sections {
         format_summary.any_background |= section.format.background != Color32::TRANSPARENT;
         format_summary.any_underline |= section.format.underline != Stroke::NONE;
+        format_summary.any_double_underline |= section.format.double_underline != Stroke::NONE;
         format_summary.any_strikethrough |= section.format.strikethrough != Stroke::NONE;
     }
     format_summary
@@ -703,7 +705,23 @@ fn tessellate_row(
         add_row_hline(point_scale, row, &mut mesh, |glyph| {
             let format = &job.sections[glyph.section_index as usize].format;
             let stroke = format.underline;
-            let y = glyph.logical_rect().bottom();
+            let y = glyph.logical_rect().bottom() - 2.0;
+            (stroke, y)
+        });
+    }
+
+    if format_summary.any_double_underline {
+        add_row_hline(point_scale, row, &mut mesh, |glyph| {
+            let format = &job.sections[glyph.section_index as usize].format;
+            let stroke = format.double_underline;
+            let y = glyph.logical_rect().bottom() - 3.0;
+            (stroke, y)
+        });
+
+        add_row_hline(point_scale, row, &mut mesh, |glyph| {
+            let format = &job.sections[glyph.section_index as usize].format;
+            let stroke = format.double_underline;
+            let y = glyph.logical_rect().bottom() - 1.0;
             (stroke, y)
         });
     }

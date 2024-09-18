@@ -35,6 +35,7 @@ pub struct RichText {
     weak: bool,
     strikethrough: bool,
     underline: bool,
+    double_underline: bool,
     italics: bool,
     raised: bool,
 }
@@ -204,6 +205,15 @@ impl RichText {
         self
     }
 
+    /// Draw two lines under the text.
+    ///
+    /// If you want to control the line color, use [`LayoutJob`] instead.
+    #[inline]
+    pub fn dpuble_underline(mut self) -> Self {
+        self.double_underline = true;
+        self
+    }
+
     /// Draw a line through the text, crossing it out.
     ///
     /// If you want to control the strikethrough line color, use [`LayoutJob`] instead.
@@ -345,6 +355,7 @@ impl RichText {
             weak: _,   // already used by `get_text_color`
             strikethrough,
             underline,
+            double_underline,
             italics,
             raised,
         } = self;
@@ -377,6 +388,11 @@ impl RichText {
         } else {
             crate::Stroke::NONE
         };
+        let double_underline = if double_underline {
+            crate::Stroke::new(1.0, line_color)
+        } else {
+            crate::Stroke::NONE
+        };
         let strikethrough = if strikethrough {
             crate::Stroke::new(1.0, line_color)
         } else {
@@ -399,6 +415,7 @@ impl RichText {
                 background: background_color,
                 italics,
                 underline,
+                double_underline,
                 strikethrough,
                 valign,
             },

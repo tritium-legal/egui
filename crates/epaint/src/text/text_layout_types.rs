@@ -263,6 +263,8 @@ pub struct TextFormat {
 
     pub underline: Stroke,
 
+    pub double_underline: Stroke,
+
     pub strikethrough: Stroke,
 
     /// If you use a small font and [`Align::TOP`] you
@@ -282,6 +284,7 @@ impl Default for TextFormat {
             background: Color32::TRANSPARENT,
             italics: false,
             underline: Stroke::NONE,
+            double_underline: Stroke::NONE,
             strikethrough: Stroke::NONE,
             valign: Align::BOTTOM,
         }
@@ -300,6 +303,7 @@ impl std::hash::Hash for TextFormat {
             italics,
             underline,
             strikethrough,
+            double_underline,
             valign,
         } = self;
         font_id.hash(state);
@@ -311,6 +315,7 @@ impl std::hash::Hash for TextFormat {
         background.hash(state);
         italics.hash(state);
         underline.hash(state);
+        double_underline.hash(state);
         strikethrough.hash(state);
         valign.hash(state);
     }
