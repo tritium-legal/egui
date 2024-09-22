@@ -46,12 +46,12 @@ fn paint_selection(
 
 /// One end of a text selection, inside any widget.
 #[derive(Clone, Copy)]
-struct WidgetTextCursor {
+pub struct WidgetTextCursor {
     widget_id: Id,
     ccursor: CCursor,
 
     /// Last known screen position
-    pos: Pos2,
+    pub pos: Pos2,
 }
 
 impl WidgetTextCursor {
@@ -80,7 +80,7 @@ impl std::fmt::Debug for WidgetTextCursor {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct CurrentSelection {
+pub struct CurrentSelection {
     /// The selection is in this layer.
     ///
     /// This is to constrain a selection to a single Window.
@@ -102,7 +102,7 @@ struct CurrentSelection {
 #[derive(Clone, Debug)]
 pub struct LabelSelectionState {
     /// The current selection, if any.
-    selection: Option<CurrentSelection>,
+    pub selection: Option<CurrentSelection>,
 
     selection_bbox_last_frame: Rect,
     selection_bbox_this_frame: Rect,
@@ -120,11 +120,11 @@ pub struct LabelSelectionState {
     has_reached_secondary: bool,
 
     /// Accumulated text to copy.
-    text_to_copy: String,
+    pub text_to_copy: String,
     last_copied_galley_rect: Option<Rect>,
 
     /// Painted selections this frame.
-    painted_shape_idx: Vec<ShapeIdx>,
+    pub painted_shape_idx: Vec<ShapeIdx>,
 }
 
 impl Default for LabelSelectionState {
