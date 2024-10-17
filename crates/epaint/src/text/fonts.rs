@@ -779,10 +779,9 @@ impl FontImplCache {
         });
         let font_scaling = ab_glyph_font.height_unscaled() / units_per_em;
         let scale_in_pixels = scale_in_pixels * font_scaling;
-
         self.cache
             .entry((
-                (scale_in_pixels * tweak.scale).round() as u32,
+                (scale_in_pixels * 1000.0 * tweak.scale) as u32,
                 font_name.to_owned(),
             ))
             .or_insert_with(|| {
