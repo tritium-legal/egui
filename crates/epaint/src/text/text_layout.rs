@@ -172,15 +172,18 @@ fn layout_section(
             }
             let mut advance_width = glyph_info.advance_width;
             if chr == '\t' {
-                let mut next_tab_stop = (paragraph.cursor_x / 36.0).trunc() * 36.0 + 36.0; // Tab stops every 36.0 points by default;
                 for tab in job.tabs.iter() {
-                    if paragraph.cursor_x <= *tab as f32 {
-                        next_tab_stop = *tab as f32;
+                    if paragraph.cursor_x < *tab as f32 {
+                        advance_width = *tab as f32 - paragraph.cursor_x;
                         break;
                     }
                 }
-                advance_width = next_tab_stop - paragraph.cursor_x;
             }
+            assert!(
+                advance_width >= 0.0,
+                "Negative advance_width for character {:?}",
+                chr
+            );
 
             paragraph.glyphs.push(Glyph {
                 chr,
