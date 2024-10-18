@@ -179,12 +179,6 @@ fn layout_section(
                     }
                 }
             }
-            assert!(
-                advance_width >= 0.0,
-                "Negative advance_width for character {:?}",
-                chr
-            );
-
             paragraph.glyphs.push(Glyph {
                 chr,
                 pos: pos2(paragraph.cursor_x, f32::NAN),
