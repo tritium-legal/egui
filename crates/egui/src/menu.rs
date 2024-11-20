@@ -530,7 +530,7 @@ impl SubMenu {
     fn new(parent_state: Arc<RwLock<MenuState>>, text: impl Into<WidgetText>) -> Self {
         let index = parent_state.write().next_entry_index();
         Self {
-            button: SubMenuButton::new(text, "⏵", index),
+            button: SubMenuButton::new(text, "\u{E5DF}", index), // Tritium edit for right triangle in Google Material Design
             parent_state,
         }
     }
