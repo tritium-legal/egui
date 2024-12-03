@@ -418,6 +418,7 @@ impl RichText {
                 double_underline,
                 strikethrough,
                 valign,
+                ..Default::default()
             },
         )
     }

@@ -271,6 +271,9 @@ pub struct TextFormat {
     /// can get the effect of raised text.
     pub valign: Align,
     // TODO(emilk): lowered
+
+    // Custom for Tritium.
+    pub is_page_number_reference: bool,
 }
 
 impl Default for TextFormat {
@@ -287,6 +290,7 @@ impl Default for TextFormat {
             double_underline: Stroke::NONE,
             strikethrough: Stroke::NONE,
             valign: Align::BOTTOM,
+            is_page_number_reference: false,
         }
     }
 }
@@ -305,6 +309,7 @@ impl std::hash::Hash for TextFormat {
             strikethrough,
             double_underline,
             valign,
+            is_page_number_reference: is_page_number,
         } = self;
         font_id.hash(state);
         crate::f32_hash(state, *extra_letter_spacing);
@@ -318,6 +323,7 @@ impl std::hash::Hash for TextFormat {
         double_underline.hash(state);
         strikethrough.hash(state);
         valign.hash(state);
+        is_page_number.hash(state);
     }
 }
 
