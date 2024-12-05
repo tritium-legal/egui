@@ -364,11 +364,12 @@ impl State {
                     consumed: self.egui_ctx.wants_keyboard_input(),
                 }
             }
-            WindowEvent::KeyboardInput { event, .. } => {
-                self.on_keyboard_input(event);
-
+            WindowEvent::KeyboardInput { event, is_synthetic, .. } => {
+                if !is_synthetic { // ignoring returning Tab key with Alt+Tab
+                    self.on_keyboard_input(event);
+                }
                 // When pressing the Tab key, egui focuses the first focusable element, hence Tab always consumes.
-                let consumed = self.egui_ctx.wants_keyboard_input()
+                let consumed = !is_synthetic && (self.egui_ctx.wants_keyboard_input())
                     || event.logical_key
                         == winit::keyboard::Key::Named(winit::keyboard::NamedKey::Tab);
                 EventResponse {
