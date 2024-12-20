@@ -71,6 +71,12 @@ pub enum Key {
     /// `;`
     Semicolon,
 
+    /// `<`
+    LessThan,
+
+    /// `>`
+    GreaterThan,
+
     // ----------------------------------------------
     // Digits:
     /// Either from the main row or from the numpad.
@@ -210,6 +216,8 @@ impl Key {
         Self::Slash,
         Self::Pipe,
         Self::Questionmark,
+        Self::GreaterThan,
+        Self::LessThan,
         // Digits:
         Self::Num0,
         Self::Num1,
@@ -333,6 +341,8 @@ impl Key {
             "[" | "OpenBracket" => Self::OpenBracket,
             "]" | "CloseBracket" => Self::CloseBracket,
             "`" | "Backtick" | "Backquote" | "Grave" => Self::Backtick,
+            "<" | "LessThan" => Self::LessThan,
+            ">" | "GreaterThan" => Self::GreaterThan,
 
             "0" | "Digit0" | "Numpad0" => Self::Num0,
             "1" | "Digit1" | "Numpad1" => Self::Num1,
@@ -481,6 +491,8 @@ impl Key {
             Self::OpenBracket => "OpenBracket",
             Self::CloseBracket => "CloseBracket",
             Self::Backtick => "Backtick",
+            Self::LessThan => "LessThan",
+            Self::GreaterThan => "GreaterThan",
 
             Self::Num0 => "0",
             Self::Num1 => "1",
