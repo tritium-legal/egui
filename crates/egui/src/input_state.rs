@@ -800,6 +800,8 @@ impl PointerState {
                 }
                 Event::PointerGone => {
                     self.latest_pos = None;
+                    self.last_click_time = std::f64::NEG_INFINITY;
+                    self.last_last_click_time = std::f64::NEG_INFINITY;
                     // NOTE: we do NOT clear `self.interact_pos` here. It will be cleared next frame.
                 }
                 Event::MouseMoved(delta) => *self.motion.get_or_insert(Vec2::ZERO) += *delta,
