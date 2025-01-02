@@ -213,10 +213,26 @@ impl FontImpl {
 
         // Add new character:
         use ab_glyph::Font as _;
-        let glyph_id = self.ab_glyph_font.glyph_id(c);
-
+        let mut glyph_id = self.ab_glyph_font.glyph_id(c);
         if glyph_id.0 == 0 {
-            None // unsupported character
+            // This is an awful Hack. We re-parse the font data to find the glyph index. XXX to improve.
+            let font_data = self.ab_glyph_font.font_data();
+            let Ok(face) = ttf_parser::Face::parse(&font_data, 0) else {
+                return None;
+            };
+            let Some(cmap) = face.tables().cmap else {
+                return None;
+            };
+            for subtable in cmap.subtables {
+                let Some(id) = subtable.glyph_index(c as u32) else {
+                    continue;
+                };
+                glyph_id.0 = id.0;
+                break;
+            }
+        }
+        if glyph_id.0 == 0 {
+            None
         } else {
             let glyph_info = self.allocate_glyph(glyph_id);
             self.glyph_info_cache.write().insert(c, glyph_info);
