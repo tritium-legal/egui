@@ -21,6 +21,7 @@ all-features = true
 
 [features]
 default = []
+puffin = []
 
 ## Enable additional checks if debug assertions are enabled (debug builds).
 extra_debug_asserts = []

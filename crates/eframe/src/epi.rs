@@ -810,6 +810,7 @@ pub trait Storage {
 }
 
 /// Stores nothing.
+#[allow(unused)]
 #[derive(Clone, Default)]
 pub(crate) struct DummyStorage {}
 
