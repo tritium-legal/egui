@@ -503,25 +503,7 @@ fn halign_and_justify_row(
         return;
     }
 
-    let num_leading_spaces = row
-        .glyphs
-        .iter()
-        .take_while(|glyph| glyph.chr.is_whitespace())
-        .count();
-
-    let glyph_range = if num_leading_spaces == row.glyphs.len() {
-        // There is only whitespace
-        (0, row.glyphs.len())
-    } else {
-        let num_trailing_spaces = row
-            .glyphs
-            .iter()
-            .rev()
-            .take_while(|glyph| glyph.chr.is_whitespace())
-            .count();
-
-        (num_leading_spaces, row.glyphs.len() - num_trailing_spaces)
-    };
+    let glyph_range = (0, row.glyphs.len());
     let num_glyphs_in_range = glyph_range.1 - glyph_range.0;
     assert!(num_glyphs_in_range > 0);
 
