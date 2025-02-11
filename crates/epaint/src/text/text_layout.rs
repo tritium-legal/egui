@@ -5,7 +5,7 @@ use emath::*;
 
 use crate::{text::font::Font, Color32, Mesh, Stroke, Vertex};
 
-use super::{FontsImpl, Galley, Glyph, LayoutJob, LayoutSection, Row, RowVisuals};
+use super::{font::UvRect, FontsImpl, Galley, Glyph, LayoutJob, LayoutSection, Row, RowVisuals};
 
 // ----------------------------------------------------------------------------
 
@@ -186,11 +186,23 @@ fn layout_section(
                 ascent: font_impl.map_or(0.0, |font| font.ascent()), // Failure to find the font here would be weird
                 uv_rect: glyph_info.uv_rect,
                 section_index,
+                visible: true,
             });
 
             paragraph.cursor_x += advance_width;
             last_glyph_id = Some(glyph_info.id);
         }
+    }
+    if byte_range.start == byte_range.end && section.format.character_type == super::CharacterType::Invisible {
+        paragraph.glyphs.push(Glyph {
+            chr: ' ',
+            pos: pos2(paragraph.cursor_x, f32::NAN),
+            size: vec2(0.0, line_height),
+            ascent: 0.0, // Failure to find the font here would be weird
+            uv_rect: UvRect::default(),
+            section_index,
+            visible: false,
+        });
     }
 }
 
@@ -403,6 +415,7 @@ fn replace_last_glyph_with_overflow_character(
             ascent: font_impl.map_or(0.0, |font| font.ascent()), // Failure to find the font here would be weird
             uv_rect: replacement_glyph_info.uv_rect,
             section_index,
+            visible: true,
         });
     } else {
         let section_index = row.section_index_at_start;
@@ -421,6 +434,7 @@ fn replace_last_glyph_with_overflow_character(
             ascent: font_impl.map_or(0.0, |font| font.ascent()), // Failure to find the font here would be weird
             uv_rect: replacement_glyph_info.uv_rect,
             section_index,
+            visible: true,
         });
     }
 

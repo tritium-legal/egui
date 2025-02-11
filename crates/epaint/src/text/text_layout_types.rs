@@ -230,6 +230,14 @@ impl std::hash::Hash for LayoutSection {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Hash, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub enum CharacterType {
+    Editable,
+    Generated,
+    Invisible,
+}
+
 // ----------------------------------------------------------------------------
 
 /// Formatting option for a section of text.
@@ -274,6 +282,7 @@ pub struct TextFormat {
 
     // Custom for Tritium.
     pub is_page_number_reference: bool,
+    pub character_type: CharacterType,
 }
 
 impl Default for TextFormat {
@@ -291,6 +300,7 @@ impl Default for TextFormat {
             strikethrough: Stroke::NONE,
             valign: Align::BOTTOM,
             is_page_number_reference: false,
+            character_type: CharacterType::Editable,
         }
     }
 }
@@ -310,6 +320,7 @@ impl std::hash::Hash for TextFormat {
             double_underline,
             valign,
             is_page_number_reference: is_page_number,
+            character_type 
         } = self;
         font_id.hash(state);
         crate::f32_hash(state, *extra_letter_spacing);
@@ -324,6 +335,7 @@ impl std::hash::Hash for TextFormat {
         strikethrough.hash(state);
         valign.hash(state);
         is_page_number.hash(state);
+        character_type.hash(state);
     }
 }
 
@@ -335,6 +347,10 @@ impl TextFormat {
             color,
             ..Default::default()
         }
+    }
+
+    pub fn is_visible(&self) -> bool {
+        self.character_type != CharacterType::Invisible
     }
 }
 
@@ -572,6 +588,9 @@ pub struct Glyph {
 
     /// Index into [`LayoutJob::sections`]. Decides color etc.
     pub section_index: u32,
+
+    /// Tritium edit
+    pub visible: bool,
 }
 
 impl Glyph {
@@ -591,7 +610,7 @@ impl Glyph {
 impl Row {
     /// The text on this row, excluding the implicit `\n` if any.
     pub fn text(&self) -> String {
-        self.glyphs.iter().map(|g| g.chr).collect()
+        self.glyphs.iter().filter(|g| g.visible).map(|g| g.chr).collect()
     }
 
     /// Excludes the implicit `\n` after the [`Row`], if any.
