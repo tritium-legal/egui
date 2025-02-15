@@ -56,9 +56,6 @@ puffin = ["dep:puffin", "egui/puffin"]
 ## Support loading svg images.
 svg = ["resvg"]
 
-## Enable better syntax highlighting using [`syntect`](https://docs.rs/syntect).
-syntect = ["dep:syntect"]
-
 
 [dependencies]
 egui = { workspace = true, default-features = false, features = ["serde"] }

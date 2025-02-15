@@ -14,8 +14,6 @@
 #[cfg(feature = "chrono")]
 mod datepicker;
 
-pub mod syntax_highlighting;
-
 #[doc(hidden)]
 pub mod image;
 mod layout;
