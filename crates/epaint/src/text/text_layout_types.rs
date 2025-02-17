@@ -234,7 +234,8 @@ impl std::hash::Hash for LayoutSection {
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum CharacterType {
     Editable,
-    Generated,
+    GeneratedEditable,
+    GeneratedUneditable,
     Invisible,
 }
 
