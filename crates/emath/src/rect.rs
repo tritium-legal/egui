@@ -208,6 +208,18 @@ impl Rect {
         Self::from_min_size(self.min + amnt, self.size())
     }
 
+    #[must_use]
+    #[inline]
+    pub fn translate_y(self, y_shift: f32) -> Self {
+        Self::translate(self, vec2(0.0, y_shift))
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn translate_x(self, x_shift: f32) -> Self {
+        Self::translate(self, vec2(x_shift, 0.0))
+    }
+
     /// Rotate the bounds (will expand the [`Rect`])
     #[must_use]
     #[inline]
