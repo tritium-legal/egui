@@ -142,10 +142,10 @@ fn layout_section(
         format,
     } = section;
     let font = fonts.font(&format.font_id);
-    let mut line_height = font.row_height();
-    if let Some(factor) = section.format.line_height {
-        line_height = line_height * factor;
-    };
+    let line_height = section
+        .format
+        .line_height
+        .unwrap_or_else(|| font.row_height());
     let extra_letter_spacing = section.format.extra_letter_spacing;
 
     let mut paragraph = out_paragraphs.last_mut().unwrap();
