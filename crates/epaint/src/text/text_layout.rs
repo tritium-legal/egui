@@ -159,6 +159,15 @@ fn layout_section(
 
     for chr in job.text[byte_range.clone()].chars() {
         if job.break_on_newline && chr == '\n' {
+            paragraph.glyphs.push(Glyph {
+                chr: '\n',
+                pos: pos2(paragraph.cursor_x, f32::NAN),
+                size: vec2(0.0, 0.0),
+                ascent: 0.0,
+                uv_rect: UvRect::default(),
+                section_index,
+                visible: false,
+            });
             out_paragraphs.push(Paragraph::from_section_index(section_index));
             paragraph = out_paragraphs.last_mut().unwrap();
             paragraph.empty_paragraph_height = line_height; // TODO(emilk): replace this hack with actually including `\n` in the glyphs?
@@ -198,7 +207,7 @@ fn layout_section(
             chr: ' ',
             pos: pos2(paragraph.cursor_x, f32::NAN),
             size: vec2(0.0, line_height),
-            ascent: 0.0, // Failure to find the font here would be weird
+            ascent: 0.0,
             uv_rect: UvRect::default(),
             section_index,
             visible: false,
