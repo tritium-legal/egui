@@ -1,10 +1,12 @@
 /// Keyboard keys.
 ///
-/// egui usually uses logical keys, i.e. after applying any user keymap.
-// TODO(emilk): split into `LogicalKey` and `PhysicalKey`
+/// egui usually uses logical keys, i.e. after applying any user keymap.\
+// See comment at the end of `Key { … }` on how to add new keys.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum Key {
+    // ----------------------------------------------
+    // Commands:
     ArrowDown,
     ArrowLeft,
     ArrowRight,
@@ -35,25 +37,34 @@ pub enum Key {
     /// `,`
     Comma,
 
-    /// '\\'
+    /// `\`
     Backslash,
 
-    /// '/'
+    /// `/`
     Slash,
 
-    /// '|', a vertical bar
+    /// `|`, a vertical bar
     Pipe,
 
     /// `?`
     Questionmark,
 
-    // '['
+    // '!'
+    Exclamationmark,
+
+    // `[`
     OpenBracket,
 
-    // ']'
+    // `]`
     CloseBracket,
 
-    /// '`', also known as "backquote" or "grave"
+    // `{`
+    OpenCurlyBracket,
+
+    // `}`
+    CloseCurlyBracket,
+
+    /// Also known as "backquote" or "grave"
     Backtick,
 
     /// `-`
@@ -68,45 +79,48 @@ pub enum Key {
     /// `=`
     Equals,
 
-    /// `;`
-    Semicolon,
-
     /// `<`
     LessThan,
 
     /// `>`
     GreaterThan,
 
+    /// `;`
+    Semicolon,
+
+    /// `'`
+    Quote,
+
     // ----------------------------------------------
     // Digits:
-    /// Either from the main row or from the numpad.
+    /// `0` (from main row or numpad)
     Num0,
 
-    /// Either from the main row or from the numpad.
+    /// `1` (from main row or numpad)
     Num1,
 
-    /// Either from the main row or from the numpad.
+    /// `2` (from main row or numpad)
     Num2,
 
-    /// Either from the main row or from the numpad.
+    /// `3` (from main row or numpad)
     Num3,
 
-    /// Either from the main row or from the numpad.
+    /// `4` (from main row or numpad)
     Num4,
 
-    /// Either from the main row or from the numpad.
+    /// `5` (from main row or numpad)
     Num5,
 
-    /// Either from the main row or from the numpad.
+    /// `6` (from main row or numpad)
     Num6,
 
-    /// Either from the main row or from the numpad.
+    /// `7` (from main row or numpad)
     Num7,
 
-    /// Either from the main row or from the numpad.
+    /// `8` (from main row or numpad)
     Num8,
 
-    /// Either from the main row or from the numpad.
+    /// `9` (from main row or numpad)
     Num9,
 
     // ----------------------------------------------
@@ -175,14 +189,19 @@ pub enum Key {
     F33,
     F34,
     F35,
-    // When adding keys, remember to also update `crates/egui-winit/src/lib.rs`
-    // and [`Self::ALL`].
+    // When adding keys, remember to also update:
+    // * crates/egui-winit/src/lib.rs
+    // * Key::ALL
+    // * Key::from_name
+    // You should test that it works using the "Input Event History" window in the egui demo app.
+    // Make sure to test both natively and on web!
     // Also: don't add keys last; add them to the group they best belong to.
 }
 
 impl Key {
     /// All egui keys
     pub const ALL: &'static [Self] = &[
+        // Commands:
         Self::ArrowDown,
         Self::ArrowLeft,
         Self::ArrowRight,
@@ -208,16 +227,20 @@ impl Key {
         Self::Period,
         Self::Plus,
         Self::Equals,
+        Self::LessThan,
+        Self::GreaterThan,
         Self::Semicolon,
         Self::OpenBracket,
         Self::CloseBracket,
+        Self::OpenCurlyBracket,
+        Self::CloseCurlyBracket,
         Self::Backtick,
         Self::Backslash,
         Self::Slash,
         Self::Pipe,
         Self::Questionmark,
-        Self::GreaterThan,
-        Self::LessThan,
+        Self::Exclamationmark,
+        Self::Quote,
         // Digits:
         Self::Num0,
         Self::Num1,
@@ -333,16 +356,20 @@ impl Key {
             "." | "Period" => Self::Period,
             "+" | "Plus" => Self::Plus,
             "=" | "Equal" | "Equals" | "NumpadEqual" => Self::Equals,
+            "<" | "LessThan" => Self::LessThan,
+            ">" | "GreaterThan" => Self::GreaterThan,
             ";" | "Semicolon" => Self::Semicolon,
             "\\" | "Backslash" => Self::Backslash,
             "/" | "Slash" => Self::Slash,
             "|" | "Pipe" => Self::Pipe,
             "?" | "Questionmark" => Self::Questionmark,
+            "!" | "Exclamationmark" => Self::Exclamationmark,
             "[" | "OpenBracket" => Self::OpenBracket,
             "]" | "CloseBracket" => Self::CloseBracket,
+            "{" | "OpenCurlyBracket" => Self::OpenCurlyBracket,
+            "}" | "CloseCurlyBracket" => Self::CloseCurlyBracket,
             "`" | "Backtick" | "Backquote" | "Grave" => Self::Backtick,
-            "<" | "LessThan" => Self::LessThan,
-            ">" | "GreaterThan" => Self::GreaterThan,
+            "'" | "Quote" => Self::Quote,
 
             "0" | "Digit0" | "Numpad0" => Self::Num0,
             "1" | "Digit1" | "Numpad1" => Self::Num1,
@@ -439,13 +466,18 @@ impl Key {
             Self::Period => ".",
             Self::Plus => "+",
             Self::Equals => "=",
+            Self::LessThan => "<",
+            Self::GreaterThan => ">",
             Self::Semicolon => ";",
             Self::Backslash => "\\",
             Self::Slash => "/",
             Self::Pipe => "|",
             Self::Questionmark => "?",
+            Self::Exclamationmark => "!",
             Self::OpenBracket => "[",
             Self::CloseBracket => "]",
+            Self::OpenCurlyBracket => "{",
+            Self::CloseCurlyBracket => "}",
             Self::Backtick => "`",
 
             _ => self.name(),
@@ -483,16 +515,20 @@ impl Key {
             Self::Period => "Period",
             Self::Plus => "Plus",
             Self::Equals => "Equals",
+            Self::GreaterThan => "GreaterThan",
+            Self::LessThan => "LessThan",
             Self::Semicolon => "Semicolon",
             Self::Backslash => "Backslash",
             Self::Slash => "Slash",
             Self::Pipe => "Pipe",
             Self::Questionmark => "Questionmark",
+            Self::Exclamationmark => "Exclamationmark",
             Self::OpenBracket => "OpenBracket",
             Self::CloseBracket => "CloseBracket",
+            Self::OpenCurlyBracket => "OpenCurlyBracket",
+            Self::CloseCurlyBracket => "CloseCurlyBracket",
             Self::Backtick => "Backtick",
-            Self::LessThan => "LessThan",
-            Self::GreaterThan => "GreaterThan",
+            Self::Quote => "Quote",
 
             Self::Num0 => "0",
             Self::Num1 => "1",

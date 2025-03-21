@@ -6,7 +6,8 @@ use super::{button::DatePickerButtonState, month_data};
 
 use crate::{Column, Size, StripBuilder, TableBuilder};
 
-#[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Default, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 struct DatePickerPopupState {
     year: i32,
     month: u32,
@@ -36,7 +37,7 @@ pub(crate) struct DatePickerPopup<'a> {
     pub highlight_weekends: bool,
 }
 
-impl<'a> DatePickerPopup<'a> {
+impl DatePickerPopup<'_> {
     /// Returns `true` if user pressed `Save` button.
     pub fn draw(&mut self, ui: &mut Ui) -> bool {
         let id = ui.make_persistent_id("date_picker");
@@ -57,6 +58,9 @@ impl<'a> DatePickerPopup<'a> {
         let height = 20.0;
         let spacing = 2.0;
         ui.spacing_mut().item_spacing = Vec2::splat(spacing);
+
+        ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend); // Don't wrap any text
+
         StripBuilder::new(ui)
             .clip(false)
             .sizes(
@@ -77,7 +81,7 @@ impl<'a> DatePickerPopup<'a> {
                     strip.strip(|builder| {
                         builder.sizes(Size::remainder(), 3).horizontal(|mut strip| {
                             strip.cell(|ui| {
-                                ComboBox::from_id_source("date_picker_year")
+                                ComboBox::from_id_salt("date_picker_year")
                                     .selected_text(popup_state.year.to_string())
                                     .show_ui(ui, |ui| {
                                         for year in today.year() - 100..today.year() + 10 {
@@ -101,7 +105,7 @@ impl<'a> DatePickerPopup<'a> {
                                     });
                             });
                             strip.cell(|ui| {
-                                ComboBox::from_id_source("date_picker_month")
+                                ComboBox::from_id_salt("date_picker_month")
                                     .selected_text(month_name(popup_state.month))
                                     .show_ui(ui, |ui| {
                                         for month in 1..=12 {
@@ -125,7 +129,7 @@ impl<'a> DatePickerPopup<'a> {
                                     });
                             });
                             strip.cell(|ui| {
-                                ComboBox::from_id_source("date_picker_day")
+                                ComboBox::from_id_salt("date_picker_day")
                                     .selected_text(popup_state.day.to_string())
                                     .show_ui(ui, |ui| {
                                         for day in 1..=popup_state.last_day_of_month() {
