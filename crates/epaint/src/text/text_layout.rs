@@ -227,10 +227,10 @@ fn layout_section(
             uv_rect: super::font::UvRect::default(),
             font_impl_height: 0.0,
             font_impl_ascent: 0.0,
-            font_height: font.row_height(),
-            font_ascent: font.ascent(),
+            font_height: 0.0,
+            font_ascent: 0.0,
             section_index,
-            visible: true,
+            visible: false,
         });
     }
 }
