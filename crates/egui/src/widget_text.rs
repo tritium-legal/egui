@@ -38,6 +38,7 @@ pub struct RichText {
     weak: bool,
     strikethrough: bool,
     underline: bool,
+    double_underline: bool,
     italics: bool,
     raised: bool,
 }
@@ -59,6 +60,7 @@ impl Default for RichText {
             weak: Default::default(),
             strikethrough: Default::default(),
             underline: Default::default(),
+            double_underline: Default::default(),
             italics: Default::default(),
             raised: Default::default(),
         }
@@ -395,6 +397,7 @@ impl RichText {
             weak: _,   // already used by `get_text_color`
             strikethrough,
             underline,
+            double_underline,
             italics,
             raised,
         } = self;
@@ -430,6 +433,11 @@ impl RichText {
         } else {
             crate::Stroke::NONE
         };
+        let double_underline = if double_underline {
+            crate::Stroke::new(1.0, line_color)
+        } else {
+            crate::Stroke::NONE
+        };
         let strikethrough = if strikethrough {
             crate::Stroke::new(1.0, line_color)
         } else {
@@ -452,9 +460,11 @@ impl RichText {
                 background: background_color,
                 italics,
                 underline,
+                double_underline,
                 strikethrough,
                 valign,
                 expand_bg,
+                ..Default::default()
             },
         )
     }

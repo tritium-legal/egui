@@ -851,7 +851,7 @@ impl FontImplCache {
 
         self.cache
             .entry((
-                (scale_in_pixels * tweak.scale).round() as u32,
+                (scale_in_pixels * 1000.0 * tweak.scale).round() as u32,
                 font_name.to_owned(),
             ))
             .or_insert_with(|| {

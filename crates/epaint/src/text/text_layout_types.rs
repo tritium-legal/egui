@@ -78,6 +78,9 @@ pub struct LayoutJob {
     /// Justify text so that word-wrapped rows fill the whole [`TextWrapping::max_width`].
     pub justify: bool,
 
+    /// special tab stops, in points
+    pub tabs: Vec<f32>, // keep it simple for now, no leaders, etc.
+
     /// Round output sizes using [`emath::GuiRounding`], to avoid rounding errors in layout code.
     pub round_output_to_gui: bool,
 }
@@ -93,6 +96,7 @@ impl Default for LayoutJob {
             break_on_newline: true,
             halign: Align::LEFT,
             justify: false,
+            tabs: Default::default(),
             round_output_to_gui: true,
         }
     }
@@ -188,6 +192,10 @@ impl LayoutJob {
             self.wrap.max_width
         }
     }
+
+    pub fn add_tab_stop(&mut self, pos: f32) {
+        self.tabs.push(pos);
+    }
 }
 
 impl std::hash::Hash for LayoutJob {
@@ -202,6 +210,7 @@ impl std::hash::Hash for LayoutJob {
             halign,
             justify,
             round_output_to_gui,
+            ..
         } = self;
 
         text.hash(state);
@@ -211,6 +220,7 @@ impl std::hash::Hash for LayoutJob {
         break_on_newline.hash(state);
         halign.hash(state);
         justify.hash(state);
+        // tabs.hash(state); // ignore tabs for now
         round_output_to_gui.hash(state);
     }
 }
@@ -241,6 +251,15 @@ impl std::hash::Hash for LayoutSection {
         byte_range.hash(state);
         format.hash(state);
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Hash, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub enum CharacterType {
+    Editable,
+    GeneratedEditable,
+    GeneratedUneditable,
+    Invisible,
 }
 
 // ----------------------------------------------------------------------------
@@ -281,6 +300,8 @@ pub struct TextFormat {
 
     pub underline: Stroke,
 
+    pub double_underline: Stroke,
+
     pub strikethrough: Stroke,
 
     /// If you use a small font and [`Align::TOP`] you
@@ -293,6 +314,10 @@ pub struct TextFormat {
     /// around a common center-line, which is nice when mixining emojis
     /// and normal text in e.g. a button.
     pub valign: Align,
+
+    // Custom for Tritium.
+    pub is_page_number_reference: bool,
+    pub character_type: CharacterType,
 }
 
 impl Default for TextFormat {
@@ -307,8 +332,11 @@ impl Default for TextFormat {
             expand_bg: 1.0,
             italics: false,
             underline: Stroke::NONE,
+            double_underline: Stroke::NONE,
             strikethrough: Stroke::NONE,
             valign: Align::BOTTOM,
+            is_page_number_reference: false,
+            character_type: CharacterType::Editable,
         }
     }
 }
@@ -325,8 +353,11 @@ impl std::hash::Hash for TextFormat {
             expand_bg,
             italics,
             underline,
+            double_underline,
             strikethrough,
             valign,
+            is_page_number_reference,
+            character_type,
         } = self;
         font_id.hash(state);
         emath::OrderedFloat(*extra_letter_spacing).hash(state);
@@ -338,8 +369,11 @@ impl std::hash::Hash for TextFormat {
         emath::OrderedFloat(*expand_bg).hash(state);
         italics.hash(state);
         underline.hash(state);
+        double_underline.hash(state);
         strikethrough.hash(state);
         valign.hash(state);
+        is_page_number_reference.hash(state);
+        character_type.hash(state);
     }
 }
 
@@ -643,6 +677,9 @@ pub struct Glyph {
 
     /// Index into [`LayoutJob::sections`]. Decides color etc.
     pub section_index: u32,
+
+    /// Tritium edit
+    pub visible: bool,
 }
 
 impl Glyph {
@@ -668,7 +705,7 @@ impl Glyph {
 impl Row {
     /// The text on this row, excluding the implicit `\n` if any.
     pub fn text(&self) -> String {
-        self.glyphs.iter().map(|g| g.chr).collect()
+        self.glyphs.iter().filter(|g| g.visible).map(|g| g.chr).collect()
     }
 
     /// Excludes the implicit `\n` after the [`Row`], if any.

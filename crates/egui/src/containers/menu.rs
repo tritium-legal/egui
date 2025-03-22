@@ -291,10 +291,10 @@ pub struct SubMenuButton<'a> {
 
 impl<'a> SubMenuButton<'a> {
     /// The default right arrow symbol: `"⏵"`
-    pub const RIGHT_ARROW: &'static str = "⏵";
+    pub const RIGHT_ARROW: &'static str = "\u{E5DF}";
 
     pub fn new(text: impl Into<WidgetText>) -> Self {
-        Self::from_button(Button::new(text).right_text("⏵"))
+        Self::from_button(Button::new(text).right_text("\u{E5DF}"))
     }
 
     /// Create a new submenu button from a [`Button`].

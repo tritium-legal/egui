@@ -109,9 +109,15 @@ pub fn layout(fonts: &mut FontsImpl, job: Arc<LayoutJob>) -> Galley {
     if justify || job.halign != Align::LEFT {
         let num_rows = rows.len();
         for (i, row) in rows.iter_mut().enumerate() {
+            let leading_indentation = if i == 0 {
+                job.sections.first().unwrap().leading_space
+            } else {
+                0.0
+            };
             let is_last_row = i + 1 == num_rows;
             let justify_row = justify && !row.ends_with_newline && !is_last_row;
             halign_and_justify_row(
+                leading_indentation,
                 point_scale,
                 row,
                 job.halign,
@@ -156,6 +162,19 @@ fn layout_section(
 
     for chr in job.text[byte_range.clone()].chars() {
         if job.break_on_newline && chr == '\n' {
+            paragraph.glyphs.push(Glyph {
+                chr: '\n',
+                pos: pos2(paragraph.cursor_x, f32::NAN),
+                uv_rect: super::font::UvRect::default(),
+                section_index,
+                visible: false,
+                advance_width: 0.0,
+                line_height,
+                font_impl_height: 0.0,
+                font_impl_ascent: 0.0,
+                font_height: font.row_height(),
+                font_ascent: font.ascent(),
+            });
             out_paragraphs.push(Paragraph::from_section_index(section_index));
             paragraph = out_paragraphs.last_mut().unwrap();
             paragraph.empty_paragraph_height = line_height; // TODO(emilk): replace this hack with actually including `\n` in the glyphs?
@@ -168,10 +187,20 @@ fn layout_section(
                 }
             }
 
+            let mut advance_width = glyph_info.advance_width;
+            if chr == '\t' {
+                for tab in job.tabs.iter() {
+                    if paragraph.cursor_x < *tab {
+                        advance_width = *tab - paragraph.cursor_x;
+                        break;
+                    }
+                }
+            }
+
             paragraph.glyphs.push(Glyph {
                 chr,
                 pos: pos2(paragraph.cursor_x, f32::NAN),
-                advance_width: glyph_info.advance_width,
+                advance_width,
                 line_height,
                 font_impl_height: font_impl.map_or(0.0, |f| f.row_height()),
                 font_impl_ascent: font_impl.map_or(0.0, |f| f.ascent()),
@@ -179,12 +208,30 @@ fn layout_section(
                 font_ascent: font.ascent(),
                 uv_rect: glyph_info.uv_rect,
                 section_index,
+                visible: true,
             });
 
             paragraph.cursor_x += glyph_info.advance_width;
             paragraph.cursor_x = font.round_to_pixel(paragraph.cursor_x);
             last_glyph_id = Some(glyph_info.id);
         }
+    }
+    if byte_range.start == byte_range.end
+        && section.format.character_type == super::CharacterType::Invisible
+    {
+        paragraph.glyphs.push(Glyph {
+            chr: ' ',
+            line_height,
+            advance_width: 0.0,
+            pos: pos2(paragraph.cursor_x, f32::NAN),
+            uv_rect: super::font::UvRect::default(),
+            font_impl_height: 0.0,
+            font_impl_ascent: 0.0,
+            font_height: font.row_height(),
+            font_ascent: font.ascent(),
+            section_index,
+            visible: true,
+        });
     }
 }
 
@@ -403,6 +450,7 @@ fn replace_last_glyph_with_overflow_character(
             font_ascent: font.ascent(),
             uv_rect: replacement_glyph_info.uv_rect,
             section_index,
+            visible: true,
         });
     } else {
         let section_index = row.section_index_at_start;
@@ -425,6 +473,7 @@ fn replace_last_glyph_with_overflow_character(
             font_ascent: font.ascent(),
             uv_rect: replacement_glyph_info.uv_rect,
             section_index,
+            visible: true,
         });
     }
 
@@ -499,6 +548,7 @@ fn replace_last_glyph_with_overflow_character(
 ///
 /// Ignores the Y coordinate.
 fn halign_and_justify_row(
+    leading_indentation: f32,
     point_scale: PointScale,
     row: &mut Row,
     halign: Align,
@@ -509,29 +559,11 @@ fn halign_and_justify_row(
         return;
     }
 
-    let num_leading_spaces = row
-        .glyphs
-        .iter()
-        .take_while(|glyph| glyph.chr.is_whitespace())
-        .count();
-
-    let glyph_range = if num_leading_spaces == row.glyphs.len() {
-        // There is only whitespace
-        (0, row.glyphs.len())
-    } else {
-        let num_trailing_spaces = row
-            .glyphs
-            .iter()
-            .rev()
-            .take_while(|glyph| glyph.chr.is_whitespace())
-            .count();
-
-        (num_leading_spaces, row.glyphs.len() - num_trailing_spaces)
-    };
+    let glyph_range = (0, row.glyphs.len());
     let num_glyphs_in_range = glyph_range.1 - glyph_range.0;
     assert!(num_glyphs_in_range > 0);
 
-    let original_min_x = row.glyphs[glyph_range.0].logical_rect().min.x;
+    let original_min_x = row.glyphs[glyph_range.0].logical_rect().min.x - leading_indentation;
     let original_max_x = row.glyphs[glyph_range.1 - 1].logical_rect().max.x;
     let original_width = original_max_x - original_min_x;
 
@@ -686,6 +718,7 @@ fn galley_from_rows(
 struct FormatSummary {
     any_background: bool,
     any_underline: bool,
+    any_double_underline: bool,
     any_strikethrough: bool,
 }
 
@@ -694,6 +727,7 @@ fn format_summary(job: &LayoutJob) -> FormatSummary {
     for section in &job.sections {
         format_summary.any_background |= section.format.background != Color32::TRANSPARENT;
         format_summary.any_underline |= section.format.underline != Stroke::NONE;
+        format_summary.any_double_underline |= section.format.double_underline != Stroke::NONE;
         format_summary.any_strikethrough |= section.format.strikethrough != Stroke::NONE;
     }
     format_summary
@@ -728,6 +762,21 @@ fn tessellate_row(
             let format = &job.sections[glyph.section_index as usize].format;
             let stroke = format.underline;
             let y = glyph.logical_rect().bottom();
+            (stroke, y)
+        });
+    }
+
+    if format_summary.any_double_underline {
+        add_row_hline(point_scale, row, &mut mesh, |glyph| {
+            let format = &job.sections[glyph.section_index as usize].format;
+            let stroke = format.double_underline;
+            let y = glyph.logical_rect().bottom() - 3.0;
+            (stroke, y)
+        });
+        add_row_hline(point_scale, row, &mut mesh, |glyph| {
+            let format = &job.sections[glyph.section_index as usize].format;
+            let stroke = format.double_underline;
+            let y = glyph.logical_rect().bottom() - 1.0;
             (stroke, y)
         });
     }
