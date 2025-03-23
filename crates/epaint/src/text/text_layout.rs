@@ -121,7 +121,7 @@ pub fn layout(fonts: &mut FontsImpl, job: Arc<LayoutJob>) -> Galley {
                 point_scale,
                 row,
                 job.halign,
-                job.wrap.max_width,
+                job.effective_wrap_width(),
                 justify_row,
             );
         }
@@ -211,8 +211,7 @@ fn layout_section(
                 visible: true,
             });
 
-            paragraph.cursor_x += glyph_info.advance_width;
-            paragraph.cursor_x = font.round_to_pixel(paragraph.cursor_x);
+            paragraph.cursor_x += advance_width;
             last_glyph_id = Some(glyph_info.id);
         }
     }
@@ -292,7 +291,8 @@ fn rows_from_paragraphs(
 }
 
 fn line_break(paragraph: &Paragraph, job: &LayoutJob, out_rows: &mut Vec<Row>, elided: &mut bool) {
-    let wrap_width = job.effective_wrap_width();
+    //let wrap_width = job.effective_wrap_width();
+    let wrap_width = job.wrap.max_width;
 
     // Keeps track of good places to insert row break if we exceed `wrap_width`.
     let mut row_break_candidates = RowBreakCandidates::default();
@@ -608,7 +608,7 @@ fn halign_and_justify_row(
 
     for glyph in &mut row.glyphs {
         glyph.pos.x += translate_x;
-        glyph.pos.x = point_scale.round_to_pixel(glyph.pos.x);
+        //glyph.pos.x = point_scale.round_to_pixel(glyph.pos.x);
         translate_x += extra_x_per_glyph;
         if glyph.chr.is_whitespace() {
             translate_x += extra_x_per_space;
@@ -637,7 +637,7 @@ fn galley_from_rows(
         for glyph in &row.glyphs {
             max_row_height = max_row_height.max(glyph.line_height);
         }
-        max_row_height = point_scale.round_to_pixel(max_row_height);
+        //max_row_height = point_scale.round_to_pixel(max_row_height);
 
         // Now position each glyph vertically:
         for glyph in &mut row.glyphs {
@@ -653,7 +653,7 @@ fn galley_from_rows(
                 // we always center the difference:
                 + 0.5 * (glyph.font_height - glyph.font_impl_height);
 
-            glyph.pos.y = point_scale.round_to_pixel(glyph.pos.y);
+            //glyph.pos.y = point_scale.round_to_pixel(glyph.pos.y);
         }
 
         row.rect.min.y = cursor_y;
@@ -662,7 +662,7 @@ fn galley_from_rows(
         min_x = min_x.min(row.rect.min.x);
         max_x = max_x.max(row.rect.max.x);
         cursor_y += max_row_height;
-        cursor_y = point_scale.round_to_pixel(cursor_y); // TODO(emilk): it would be better to do the calculations in pixels instead.
+        //cursor_y = point_scale.round_to_pixel(cursor_y); // TODO(emilk): it would be better to do the calculations in pixels instead.
     }
 
     let format_summary = format_summary(&job);

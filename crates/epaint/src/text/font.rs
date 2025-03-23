@@ -69,7 +69,7 @@ pub struct FontImpl {
     ab_glyph_font: ab_glyph::FontArc,
 
     /// Maximum character height
-    scale_in_pixels: u32,
+    scale_in_pixels: f32,
 
     height_in_points: f32,
 
@@ -96,29 +96,22 @@ impl FontImpl {
 
         use ab_glyph::{Font, ScaleFont};
         let scaled = ab_glyph_font.as_scaled(scale_in_pixels);
-        let ascent = (scaled.ascent() / pixels_per_point).round_ui();
-        let descent = (scaled.descent() / pixels_per_point).round_ui();
-        let line_gap = (scaled.line_gap() / pixels_per_point).round_ui();
+        // NOTE the removal of round_ui() here. This really should remain for the non-UI case.
+        let ascent = scaled.ascent() / pixels_per_point;
+        let descent = scaled.descent() / pixels_per_point;
+        let line_gap = scaled.line_gap() / pixels_per_point;
 
         // Tweak the scale as the user desired
         let scale_in_pixels = scale_in_pixels * tweak.scale;
         let scale_in_points = scale_in_pixels / pixels_per_point;
 
-        let baseline_offset = (scale_in_points * tweak.baseline_offset_factor).round_ui();
+        let baseline_offset = scale_in_points * tweak.baseline_offset_factor;
 
-        let y_offset_points =
-            ((scale_in_points * tweak.y_offset_factor) + tweak.y_offset).round_ui();
+        let y_offset_points = (scale_in_points * tweak.y_offset_factor) + tweak.y_offset;
 
         // Center scaled glyphs properly:
         let height = ascent + descent;
-        let y_offset_points = y_offset_points - (1.0 - tweak.scale) * 0.5 * height;
-
-        // Round to an even number of physical pixels to get even kerning.
-        // See https://github.com/emilk/egui/issues/382
-        let scale_in_pixels = scale_in_pixels.round() as u32;
-
-        // Round to closest pixel:
-        let y_offset_in_points = (y_offset_points * pixels_per_point).round() / pixels_per_point;
+        let y_offset_in_points = y_offset_points - (1.0 - tweak.scale) * 0.5 * height;
 
         Self {
             name,
@@ -254,7 +247,7 @@ impl FontImpl {
     ) -> f32 {
         use ab_glyph::{Font as _, ScaleFont};
         self.ab_glyph_font
-            .as_scaled(self.scale_in_pixels as f32)
+            .as_scaled(self.scale_in_pixels)
             .kern(last_glyph_id, glyph_id)
             / self.pixels_per_point
     }
@@ -285,7 +278,7 @@ impl FontImpl {
         use ab_glyph::{Font as _, ScaleFont};
 
         let glyph = glyph_id.with_scale_and_position(
-            self.scale_in_pixels as f32,
+            self.scale_in_pixels,
             ab_glyph::Point { x: 0.0, y: 0.0 },
         );
 
@@ -327,7 +320,7 @@ impl FontImpl {
 
         let advance_width_in_points = self
             .ab_glyph_font
-            .as_scaled(self.scale_in_pixels as f32)
+            .as_scaled(self.scale_in_pixels)
             .h_advance(glyph_id)
             / self.pixels_per_point;
 
