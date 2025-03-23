@@ -78,7 +78,6 @@ pub enum PopupCloseBehavior {
     /// Popup will be closed on click anywhere, inside or outside the popup.
     ///
     /// It is used in [`crate::ComboBox`] and in [`crate::containers::menu`]s.
-    #[default]
     CloseOnClick,
 
     /// Popup will be closed if the click happened somewhere else
@@ -87,6 +86,7 @@ pub enum PopupCloseBehavior {
 
     /// Clicks will be ignored. Popup might be closed manually by calling [`crate::Memory::close_all_popups`]
     /// or by pressing the escape button
+    #[default]
     IgnoreClicks,
 }
 
