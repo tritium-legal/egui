@@ -737,7 +737,7 @@ struct GalleyCache {
 }
 
 impl GalleyCache {
-    fn layout(&mut self, fonts: &mut FontsImpl, mut job: LayoutJob) -> Arc<Galley> {
+    fn layout(&mut self, fonts: &mut FontsImpl, job: LayoutJob) -> Arc<Galley> {
         if job.wrap.max_width.is_finite() {
             // Protect against rounding errors in egui layout code.
 
@@ -753,6 +753,7 @@ impl GalleyCache {
             // And then the cycle continues.
 
             // So we limit max_width to integers.
+            // Not in Tritium, we don't.
 
             // Related issues:
             // * https://github.com/emilk/egui/issues/4927
@@ -760,7 +761,8 @@ impl GalleyCache {
             // * https://github.com/emilk/egui/issues/5084
             // * https://github.com/emilk/egui/issues/5163
 
-            job.wrap.max_width = job.wrap.max_width.round();
+
+            //job.wrap.max_width = job.wrap.max_width.round();
         }
 
         let hash = crate::util::hash(&job); // TODO(emilk): even faster hasher?

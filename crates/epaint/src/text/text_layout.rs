@@ -121,7 +121,7 @@ pub fn layout(fonts: &mut FontsImpl, job: Arc<LayoutJob>) -> Galley {
                 point_scale,
                 row,
                 job.halign,
-                job.effective_wrap_width(),
+                job.wrap.max_width,
                 justify_row,
             );
         }
@@ -291,8 +291,7 @@ fn rows_from_paragraphs(
 }
 
 fn line_break(paragraph: &Paragraph, job: &LayoutJob, out_rows: &mut Vec<Row>, elided: &mut bool) {
-    //let wrap_width = job.effective_wrap_width();
-    let wrap_width = job.wrap.max_width;
+    let wrap_width = job.effective_wrap_width();
 
     // Keeps track of good places to insert row break if we exceed `wrap_width`.
     let mut row_break_candidates = RowBreakCandidates::default();
@@ -652,8 +651,6 @@ fn galley_from_rows(
                 // When mixing different `FontImpl` (e.g. latin and emojis),
                 // we always center the difference:
                 + 0.5 * (glyph.font_height - glyph.font_impl_height);
-
-            //glyph.pos.y = point_scale.round_to_pixel(glyph.pos.y);
         }
 
         row.rect.min.y = cursor_y;
@@ -662,7 +659,6 @@ fn galley_from_rows(
         min_x = min_x.min(row.rect.min.x);
         max_x = max_x.max(row.rect.max.x);
         cursor_y += max_row_height;
-        //cursor_y = point_scale.round_to_pixel(cursor_y); // TODO(emilk): it would be better to do the calculations in pixels instead.
     }
 
     let format_summary = format_summary(&job);
