@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use emath::{vec2, GuiRounding, Vec2};
+use emath::{vec2, Vec2};
 
 use crate::{
     mutex::{Mutex, RwLock},
@@ -277,10 +277,8 @@ impl FontImpl {
         assert!(glyph_id.0 != 0);
         use ab_glyph::{Font as _, ScaleFont};
 
-        let glyph = glyph_id.with_scale_and_position(
-            self.scale_in_pixels,
-            ab_glyph::Point { x: 0.0, y: 0.0 },
-        );
+        let glyph = glyph_id
+            .with_scale_and_position(self.scale_in_pixels, ab_glyph::Point { x: 0.0, y: 0.0 });
 
         let uv_rect = self.ab_glyph_font.outline_glyph(glyph).map(|glyph| {
             let bb = glyph.px_bounds();
