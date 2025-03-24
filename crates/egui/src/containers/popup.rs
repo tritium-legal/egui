@@ -82,11 +82,11 @@ pub enum PopupCloseBehavior {
 
     /// Popup will be closed if the click happened somewhere else
     /// but in the popup's body
+    #[default]
     CloseOnClickOutside,
 
     /// Clicks will be ignored. Popup might be closed manually by calling [`crate::Memory::close_all_popups`]
     /// or by pressing the escape button
-    #[default]
     IgnoreClicks,
 }
 
