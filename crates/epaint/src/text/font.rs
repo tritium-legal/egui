@@ -76,6 +76,7 @@ pub struct FontImpl {
     // move each character by this much (hack)
     y_offset_in_points: f32,
 
+    is_white: bool,
     ascent: f32,
     pixels_per_point: f32,
     glyph_info_cache: RwLock<ahash::HashMap<char, GlyphInfo>>, // TODO(emilk): standard Mutex
@@ -112,6 +113,7 @@ impl FontImpl {
         // Center scaled glyphs properly:
         let height = ascent + descent;
         let y_offset_in_points = y_offset_points - (1.0 - tweak.scale) * 0.5 * height;
+        let is_white = name.contains("Roboto") || name.contains("ui");
 
         Self {
             name,
@@ -121,6 +123,7 @@ impl FontImpl {
             y_offset_in_points,
             ascent: ascent + baseline_offset,
             pixels_per_point,
+            is_white,
             glyph_info_cache: Default::default(),
             atlas,
         }
@@ -290,13 +293,23 @@ impl FontImpl {
                 let glyph_pos = {
                     let atlas = &mut self.atlas.lock();
                     let (glyph_pos, image) = atlas.allocate((glyph_width, glyph_height));
-                    glyph.draw(|x, y, v| {
-                        if 0.0 < v {
-                            let px = glyph_pos.0 + x as usize;
-                            let py = glyph_pos.1 + y as usize;
-                            image[(px, py)] = v;
-                        }
-                    });
+                    if self.is_white {
+                        glyph.draw(|x, y, v| {
+                            if 0.0 < v {
+                                let px = glyph_pos.0 + x as usize;
+                                let py = glyph_pos.1 + y as usize;
+                                image[(px, py)] = 2.0 * v - v * v;
+                            }
+                        });
+                    } else {
+                        glyph.draw(|x, y, v| {
+                            if 0.0 < v {
+                                let px = glyph_pos.0 + x as usize;
+                                let py = glyph_pos.1 + y as usize;
+                                image[(px, py)] = v.powf(1.1);
+                            }
+                        });
+                    }
                     glyph_pos
                 };
 

@@ -542,7 +542,7 @@ impl Painter {
                 let data: Vec<u8> = {
                     profiling::scope!("font -> sRGBA");
                     image
-                        .srgba_pixels(Some(0.9)) // critical for avoiding artifacts in rendered docs
+                        .srgba_pixels() // critical for avoiding artifacts in rendered docs
                         .flat_map(|a| a.to_array())
                         .collect()
                 };

@@ -305,24 +305,13 @@ impl FontImage {
     ///
     /// If you are having problems with text looking skinny and pixelated, try using a low gamma, e.g. `0.4`.
     #[inline]
-    pub fn srgba_pixels(&self, gamma: Option<f32>) -> impl ExactSizeIterator<Item = Color32> + '_ {
+    pub fn srgba_pixels(&self) -> impl ExactSizeIterator<Item = Color32> + '_ {
         // This whole function is less than rigorous.
         // Ideally we should do this in a shader instead, and use different computations
         // for different text colors.
         // See https://hikogui.org/2022/10/24/the-trouble-with-anti-aliasing.html for an in-depth analysis.
         self.pixels.iter().map(move |coverage| {
-            let alpha = if let Some(gamma) = gamma {
-                coverage.powf(gamma)
-            } else {
-                // alpha = coverage * coverage; // recommended by the article for WHITE text (using linear blending)
-
-                // The following is recommended by the article for BLACK text (using linear blending).
-                // Very similar to a gamma of 0.5, but produces sharper text.
-                // In practice it works well for all text colors (better than a gamma of 0.5, for instance).
-                // See https://www.desmos.com/calculator/w0ndf5blmn for a visual comparison.
-                2.0 * coverage - coverage * coverage
-            };
-            Color32::from_white_alpha(ecolor::linear_u8_from_linear_f32(alpha))
+            Color32::from_white_alpha(ecolor::linear_u8_from_linear_f32(*coverage))
         })
     }
 
