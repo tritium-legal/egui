@@ -772,12 +772,7 @@ impl State {
                     self.egui_input.events.push(egui::Event::Copy);
                     return;
                 } else if is_paste_command(self.egui_input.modifiers, active_key) {
-                    if let Some(contents) = self.clipboard.get() {
-                        let contents = contents.replace("\r\n", "\n");
-                        if !contents.is_empty() {
-                            self.egui_input.events.push(egui::Event::Paste(contents));
-                        }
-                    }
+                    self.egui_input.events.push(egui::Event::Paste(String::new()));
                     return;
                 }
             }
