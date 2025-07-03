@@ -65,7 +65,8 @@ impl TextAgent {
                 // if `is_composing` is true, then user is using IME, for example: emoji, pinyin, kanji, hangul, etc.
                 // In that case, the browser emits both `input` and `compositionupdate` events,
                 // and we need to ignore the `input` event.
-                if !text.is_empty() && !event.is_composing() {
+                // Edit(DM): use ascii check to avoid issues with IME input on Samsung, for example.
+                if !text.is_empty() && (!event.is_composing() || text.chars().all(|c| c.is_ascii())) {
                     input.set_value("");
                     let event = egui::Event::Text(text);
                     runner.input.raw.events.push(event);
