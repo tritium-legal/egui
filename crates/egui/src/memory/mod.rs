@@ -899,7 +899,7 @@ impl Memory {
     ///
     /// You must first give focus to the widget before calling this.
     pub fn set_focus_lock_filter(&mut self, id: Id, event_filter: EventFilter) {
-        if self.had_focus_last_frame(id) && self.has_focus(id) {
+        if self.has_focus(id) {
             if let Some(focused) = &mut self.focus_mut().focused_widget {
                 if focused.id == id {
                     focused.filter = event_filter;
