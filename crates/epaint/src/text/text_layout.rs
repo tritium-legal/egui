@@ -110,7 +110,11 @@ pub fn layout(fonts: &mut FontsImpl, job: Arc<LayoutJob>) -> Galley {
         let num_rows = rows.len();
         for (i, row) in rows.iter_mut().enumerate() {
             let leading_indentation = if i == 0 {
-                job.sections.first().unwrap().leading_space
+                if let Some(first) = job.sections.first() {
+                    first.leading_space
+                } else {
+                    0.0
+                }
             } else {
                 0.0
             };
