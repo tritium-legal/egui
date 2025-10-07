@@ -1064,7 +1064,7 @@ fn is_copy_command(modifiers: egui::Modifiers, keycode: egui::Key) -> bool {
 
 fn is_paste_command(modifiers: egui::Modifiers, keycode: egui::Key) -> bool {
     keycode == egui::Key::Paste
-        || (modifiers.command && !modifiers.shift && keycode == egui::Key::V)
+        || (modifiers.command && !modifiers.shift && !modifiers.alt && keycode == egui::Key::V)
         || (cfg!(target_os = "windows") && modifiers.shift && keycode == egui::Key::Insert)
 }
 
