@@ -464,6 +464,8 @@ impl RichText {
                 valign,
                 expand_bg,
                 character_type: epaint::text::CharacterType::Editable,
+                bold: false,
+                is_page_number_reference: false,
             },
         )
     }

@@ -266,7 +266,7 @@ impl std::hash::Hash for LayoutSection {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Hash, Copy)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum CharacterType {
     Editable,
@@ -307,6 +307,8 @@ pub struct TextFormat {
     /// Default: 1.0
     pub expand_bg: f32,
 
+    pub bold: bool,
+
     pub italics: bool,
 
     pub underline: Stroke,
@@ -326,6 +328,8 @@ pub struct TextFormat {
     /// and normal text in e.g. a button.
     pub valign: Align,
 
+    pub is_page_number_reference: bool,
+
     pub character_type: CharacterType,
 }
 
@@ -339,11 +343,13 @@ impl Default for TextFormat {
             color: Color32::GRAY,
             background: Color32::TRANSPARENT,
             expand_bg: 1.0,
+            bold: false,
             italics: false,
             underline: Stroke::NONE,
             double_underline: Stroke::NONE,
             strikethrough: Stroke::NONE,
             valign: Align::BOTTOM,
+            is_page_number_reference: false,
             character_type: CharacterType::Editable,
         }
     }
@@ -359,11 +365,13 @@ impl std::hash::Hash for TextFormat {
             color,
             background,
             expand_bg,
+            bold,
             italics,
             underline,
             double_underline,
             strikethrough,
             valign,
+            is_page_number_reference,
             character_type,
         } = self;
         font_id.hash(state);
@@ -375,10 +383,12 @@ impl std::hash::Hash for TextFormat {
         background.hash(state);
         emath::OrderedFloat(*expand_bg).hash(state);
         italics.hash(state);
+        bold.hash(state);
         underline.hash(state);
         double_underline.hash(state);
         strikethrough.hash(state);
         valign.hash(state);
+        is_page_number_reference.hash(state);
         character_type.hash(state);
     }
 }
