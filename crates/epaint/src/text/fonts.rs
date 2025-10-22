@@ -852,7 +852,7 @@ impl GalleyCache {
     fn layout_internal(
         &mut self,
         fonts: &mut FontsImpl,
-        mut job: LayoutJob,
+        job: LayoutJob,
         pixels_per_point: f32,
         allow_split_paragraphs: bool,
     ) -> (u64, Arc<Galley>) {
@@ -877,8 +877,6 @@ impl GalleyCache {
             // * https://github.com/emilk/egui/issues/4928
             // * https://github.com/emilk/egui/issues/5084
             // * https://github.com/emilk/egui/issues/5163
-
-            job.wrap.max_width = job.wrap.max_width.round();
         }
 
         let hash = crate::util::hash((&job, OrderedFloat(pixels_per_point))); // TODO(emilk): even faster hasher?
@@ -989,6 +987,7 @@ impl GalleyCache {
                 break_on_newline: job.break_on_newline,
                 halign: job.halign,
                 justify: job.justify,
+                tabs: Vec::new(),
                 first_row_min_height: if is_first_paragraph {
                     job.first_row_min_height
                 } else {

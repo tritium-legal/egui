@@ -126,9 +126,16 @@ pub fn layout(fonts: &mut FontsImpl, pixels_per_point: f32, job: Arc<LayoutJob>)
     if justify || job.halign != Align::LEFT {
         let num_rows = rows.len();
         for (i, placed_row) in rows.iter_mut().enumerate() {
+            let leading_indentation = job
+                .sections
+                .first()
+                .filter(|_| i == 0)
+                .map_or(0.0, |section| section.leading_space);
+
             let is_last_row = i + 1 == num_rows;
             let justify_row = justify && !placed_row.ends_with_newline && !is_last_row;
             halign_and_justify_row(
+                leading_indentation,
                 point_scale,
                 placed_row,
                 job.halign,
@@ -179,13 +186,52 @@ fn layout_section(
     let mut current_font_impl_metrics = ScaledMetrics::default();
 
     for chr in job.text[byte_range.clone()].chars() {
+        let (font_id, glyph_info) = font.glyph_info(chr);
+        let mut font_impl = font.fonts_by_id.get_mut(&font_id);
+
+        if let (Some(font_impl), Some(last_glyph_id), Some(glyph_id)) =
+            (&font_impl, last_glyph_id, glyph_info.id)
+        {
+            paragraph.cursor_x_px +=
+                font_impl.pair_kerning_pixels(&current_font_impl_metrics, last_glyph_id, glyph_id);
+
+            // Only apply extra_letter_spacing to glyphs after the first one:
+            paragraph.cursor_x_px += extra_letter_spacing * pixels_per_point;
+        }
+
+        let (glyph_alloc, physical_x) = if let Some(font_impl) = font_impl.as_mut() {
+            font_impl.allocate_glyph(
+                font.atlas,
+                &current_font_impl_metrics,
+                glyph_info,
+                chr,
+                paragraph.cursor_x_px,
+            )
+        } else {
+            Default::default()
+        };
+
+        let pos = pos2(physical_x as f32 / pixels_per_point, f32::NAN);
+
         if job.break_on_newline && chr == '\n' {
+            paragraph.glyphs.push(Glyph {
+                chr: '\n',
+                pos,
+                uv_rect: super::font::UvRect::default(),
+                section_index,
+                visible: false,
+                advance_width: 0.0,
+                line_height,
+                font_impl_height: 0.0,
+                font_impl_ascent: 0.0,
+                font_height: font_metrics.row_height,
+                font_ascent: font_metrics.ascent,
+            });
+
             out_paragraphs.push(Paragraph::from_section_index(section_index));
             paragraph = out_paragraphs.last_mut().unwrap();
             paragraph.empty_paragraph_height = line_height; // TODO(emilk): replace this hack with actually including `\n` in the glyphs?
         } else {
-            let (font_id, glyph_info) = font.glyph_info(chr);
-            let mut font_impl = font.fonts_by_id.get_mut(&font_id);
             if current_font != font_id {
                 current_font = font_id;
                 current_font_impl_metrics = font_impl
@@ -193,31 +239,6 @@ fn layout_section(
                     .map(|font_impl| font_impl.scaled_metrics(pixels_per_point, font_size))
                     .unwrap_or_default();
             }
-
-            if let (Some(font_impl), Some(last_glyph_id), Some(glyph_id)) =
-                (&font_impl, last_glyph_id, glyph_info.id)
-            {
-                paragraph.cursor_x_px += font_impl.pair_kerning_pixels(
-                    &current_font_impl_metrics,
-                    last_glyph_id,
-                    glyph_id,
-                );
-
-                // Only apply extra_letter_spacing to glyphs after the first one:
-                paragraph.cursor_x_px += extra_letter_spacing * pixels_per_point;
-            }
-
-            let (glyph_alloc, physical_x) = if let Some(font_impl) = font_impl.as_mut() {
-                font_impl.allocate_glyph(
-                    font.atlas,
-                    &current_font_impl_metrics,
-                    glyph_info,
-                    chr,
-                    paragraph.cursor_x_px,
-                )
-            } else {
-                Default::default()
-            };
 
             let mut advance_width = glyph_alloc.advance_width_px / pixels_per_point;
             let paragraph_cursor_x_points = paragraph.cursor_x_px / pixels_per_point;
@@ -233,7 +254,7 @@ fn layout_section(
 
             paragraph.glyphs.push(Glyph {
                 chr,
-                pos: pos2(physical_x as f32 / pixels_per_point, f32::NAN),
+                pos,
                 advance_width,
                 line_height,
                 font_impl_height: current_font_impl_metrics.row_height,
@@ -242,10 +263,29 @@ fn layout_section(
                 font_ascent: font_metrics.ascent,
                 uv_rect: glyph_alloc.uv_rect,
                 section_index,
+                visible: true,
             });
 
             paragraph.cursor_x_px += glyph_alloc.advance_width_px;
             last_glyph_id = Some(glyph_alloc.id);
+        }
+
+        if byte_range.start == byte_range.end
+            && section.format.character_type == super::CharacterType::Invisible
+        {
+            paragraph.glyphs.push(Glyph {
+                chr: ' ',
+                line_height,
+                advance_width: 0.0,
+                pos,
+                uv_rect: super::font::UvRect::default(),
+                font_impl_height: 0.0,
+                font_impl_ascent: 0.0,
+                font_height: 0.0,
+                font_ascent: 0.0,
+                section_index,
+                visible: false,
+            });
         }
     }
 }
@@ -544,6 +584,7 @@ fn replace_last_glyph_with_overflow_character(
                 font_ascent: font_metrics.ascent,
                 uv_rect: replacement_glyph_alloc.uv_rect,
                 section_index,
+                visible: true,
             });
             return;
         }
@@ -561,6 +602,7 @@ fn replace_last_glyph_with_overflow_character(
 ///
 /// Ignores the Y coordinate.
 fn halign_and_justify_row(
+    leading_indentation: f32,
     point_scale: PointScale,
     placed_row: &mut PlacedRow,
     halign: Align,
@@ -575,29 +617,11 @@ fn halign_and_justify_row(
         return;
     }
 
-    let num_leading_spaces = row
-        .glyphs
-        .iter()
-        .take_while(|glyph| glyph.chr.is_whitespace())
-        .count();
-
-    let glyph_range = if num_leading_spaces == row.glyphs.len() {
-        // There is only whitespace
-        (0, row.glyphs.len())
-    } else {
-        let num_trailing_spaces = row
-            .glyphs
-            .iter()
-            .rev()
-            .take_while(|glyph| glyph.chr.is_whitespace())
-            .count();
-
-        (num_leading_spaces, row.glyphs.len() - num_trailing_spaces)
-    };
+    let glyph_range = (0, row.glyphs.len());
     let num_glyphs_in_range = glyph_range.1 - glyph_range.0;
     assert!(num_glyphs_in_range > 0, "Should have at least one glyph");
 
-    let original_min_x = row.glyphs[glyph_range.0].logical_rect().min.x;
+    let original_min_x = row.glyphs[glyph_range.0].logical_rect().min.x - leading_indentation;
     let original_max_x = row.glyphs[glyph_range.1 - 1].logical_rect().max.x;
     let original_width = original_max_x - original_min_x;
 
@@ -643,7 +667,6 @@ fn halign_and_justify_row(
 
     for glyph in &mut row.glyphs {
         glyph.pos.x += translate_x;
-        glyph.pos.x = point_scale.round_to_pixel(glyph.pos.x);
         translate_x += extra_x_per_glyph;
         if glyph.chr.is_whitespace() {
             translate_x += extra_x_per_space;
@@ -673,7 +696,6 @@ fn galley_from_rows(
         for glyph in &row.glyphs {
             max_row_height = max_row_height.at_least(glyph.line_height);
         }
-        max_row_height = point_scale.round_to_pixel(max_row_height);
 
         // Now position each glyph vertically:
         for glyph in &mut row.glyphs {
@@ -687,15 +709,12 @@ fn galley_from_rows(
                 // When mixing different `FontImpl` (e.g. latin and emojis),
                 // we always center the difference:
                 + 0.5 * (glyph.font_height - glyph.font_impl_height);
-
-            glyph.pos.y = point_scale.round_to_pixel(glyph.pos.y);
         }
 
         placed_row.pos.y = cursor_y;
         row.size.y = max_row_height;
 
         cursor_y += max_row_height;
-        cursor_y = point_scale.round_to_pixel(cursor_y); // TODO(emilk): it would be better to do the calculations in pixels instead.
     }
 
     let format_summary = format_summary(&job);

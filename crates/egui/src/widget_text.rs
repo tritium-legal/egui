@@ -463,6 +463,7 @@ impl RichText {
                 strikethrough,
                 valign,
                 expand_bg,
+                character_type: epaint::text::CharacterType::Editable,
             },
         )
     }

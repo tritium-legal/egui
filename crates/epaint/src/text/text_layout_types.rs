@@ -266,6 +266,15 @@ impl std::hash::Hash for LayoutSection {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Hash, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub enum CharacterType {
+    Editable,
+    GeneratedEditable,
+    GeneratedUneditable,
+    Invisible,
+}
+
 // ----------------------------------------------------------------------------
 
 /// Formatting option for a section of text.
@@ -316,6 +325,8 @@ pub struct TextFormat {
     /// around a common center-line, which is nice when mixining emojis
     /// and normal text in e.g. a button.
     pub valign: Align,
+
+    pub character_type: CharacterType,
 }
 
 impl Default for TextFormat {
@@ -333,6 +344,7 @@ impl Default for TextFormat {
             double_underline: Stroke::NONE,
             strikethrough: Stroke::NONE,
             valign: Align::BOTTOM,
+            character_type: CharacterType::Editable,
         }
     }
 }
@@ -352,6 +364,7 @@ impl std::hash::Hash for TextFormat {
             double_underline,
             strikethrough,
             valign,
+            character_type,
         } = self;
         font_id.hash(state);
         emath::OrderedFloat(*extra_letter_spacing).hash(state);
@@ -366,6 +379,7 @@ impl std::hash::Hash for TextFormat {
         double_underline.hash(state);
         strikethrough.hash(state);
         valign.hash(state);
+        character_type.hash(state);
     }
 }
 
@@ -714,6 +728,8 @@ pub struct Glyph {
     /// enable the paragraph-concat optimization path without having to
     /// adjust `section_index` when concatting.
     pub(crate) section_index: u32,
+
+    pub visible: bool,
 }
 
 impl Glyph {
@@ -739,7 +755,11 @@ impl Glyph {
 impl Row {
     /// The text on this row, excluding the implicit `\n` if any.
     pub fn text(&self) -> String {
-        self.glyphs.iter().map(|g| g.chr).collect()
+        self.glyphs
+            .iter()
+            .filter(|g| g.visible)
+            .map(|g| g.chr)
+            .collect()
     }
 
     /// Excludes the implicit `\n` after the [`Row`], if any.

@@ -58,6 +58,7 @@ unity = []
 _override_unity = []
 
 [dependencies]
+ttf-parser = "0.25"
 emath.workspace = true
 ecolor.workspace = true
 

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use ab_glyph::{Font as _, OutlinedGlyph, PxScale};
-use emath::{GuiRounding as _, OrderedFloat, Vec2, vec2};
+use emath::{OrderedFloat, Vec2, vec2};
 
 use crate::{
     TextureAtlas,
@@ -276,7 +276,21 @@ impl FontImpl {
         }
 
         // Add new character:
-        let glyph_id = self.ab_glyph_font.glyph_id(c);
+        let mut glyph_id = self.ab_glyph_font.glyph_id(c);
+        if glyph_id.0 == 0 {
+            let font_data = self.ab_glyph_font.font_data();
+            let Ok(face) = ttf_parser::Face::parse(font_data, 0) else {
+                return None;
+            };
+            let cmap = face.tables().cmap?;
+            for subtable in cmap.subtables {
+                let Some(id) = subtable.glyph_index(c as u32) else {
+                    continue;
+                };
+                glyph_id.0 = id.0;
+                break;
+            }
+        }
 
         if glyph_id.0 == 0 {
             None // unsupported character
@@ -315,16 +329,15 @@ impl FontImpl {
         let pt_scale_factor = self
             .ab_glyph_font
             .px_scale_factor(font_size * self.tweak.scale);
-        let ascent = (self.ab_glyph_font.ascent_unscaled() * pt_scale_factor).round_ui();
-        let descent = (self.ab_glyph_font.descent_unscaled() * pt_scale_factor).round_ui();
-        let line_gap = (self.ab_glyph_font.line_gap_unscaled() * pt_scale_factor).round_ui();
+        let ascent = self.ab_glyph_font.ascent_unscaled() * pt_scale_factor;
+        let descent = self.ab_glyph_font.descent_unscaled() * pt_scale_factor;
+        let line_gap = self.ab_glyph_font.line_gap_unscaled() * pt_scale_factor;
 
         let scale = font_size * self.tweak.scale * pixels_per_point;
         let px_scale_factor = self.ab_glyph_font.px_scale_factor(scale);
 
-        let y_offset_in_points = ((font_size * self.tweak.scale * self.tweak.y_offset_factor)
-            + self.tweak.y_offset)
-            .round_ui();
+        let y_offset_in_points =
+            (font_size * self.tweak.scale * self.tweak.y_offset_factor) + self.tweak.y_offset;
 
         ScaledMetrics {
             pixels_per_point,
@@ -408,6 +421,28 @@ impl FontImpl {
                             image[(px, py)] = text_alpha_from_coverage.color_from_coverage(v);
                         }
                     });
+
+                    let is_white = self.name.contains("Roboto") || self.name.contains("ui");
+                    if is_white {
+                        outlined.draw(|x, y, v| {
+                            if 0.0 < v {
+                                let px = glyph_pos.0 + x as usize;
+                                let py = glyph_pos.1 + y as usize;
+                                image[(px, py)] =
+                                    text_alpha_from_coverage.color_from_coverage(2.0 * v - v * v);
+                            }
+                        });
+                    } else {
+                        outlined.draw(|x, y, v| {
+                            if 0.0 < v {
+                                let px = glyph_pos.0 + x as usize;
+                                let py = glyph_pos.1 + y as usize;
+                                image[(px, py)] =
+                                    text_alpha_from_coverage.color_from_coverage(v.powf(1.1));
+                            }
+                        });
+                    }
+
                     glyph_pos
                 };
 
