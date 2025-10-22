@@ -219,10 +219,22 @@ fn layout_section(
                 Default::default()
             };
 
+            let mut advance_width = glyph_alloc.advance_width_px / pixels_per_point;
+            let paragraph_cursor_x_points = paragraph.cursor_x_px / pixels_per_point;
+
+            if chr == '\t' {
+                for tab in &job.tabs {
+                    if paragraph_cursor_x_points < *tab {
+                        advance_width = *tab - paragraph_cursor_x_points;
+                        break;
+                    }
+                }
+            }
+
             paragraph.glyphs.push(Glyph {
                 chr,
                 pos: pos2(physical_x as f32 / pixels_per_point, f32::NAN),
-                advance_width: glyph_alloc.advance_width_px / pixels_per_point,
+                advance_width,
                 line_height,
                 font_impl_height: current_font_impl_metrics.row_height,
                 font_impl_ascent: current_font_impl_metrics.ascent,

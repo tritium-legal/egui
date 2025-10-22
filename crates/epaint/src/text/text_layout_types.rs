@@ -78,6 +78,8 @@ pub struct LayoutJob {
     /// Justify text so that word-wrapped rows fill the whole [`TextWrapping::max_width`].
     pub justify: bool,
 
+    pub tabs: Vec<f32>,
+
     /// Round output sizes using [`emath::GuiRounding`], to avoid rounding errors in layout code.
     pub round_output_to_gui: bool,
 }
@@ -93,6 +95,7 @@ impl Default for LayoutJob {
             break_on_newline: true,
             halign: Align::LEFT,
             justify: false,
+            tabs: Default::default(),
             round_output_to_gui: true,
         }
     }
@@ -203,6 +206,10 @@ impl LayoutJob {
             self.wrap.max_width
         }
     }
+
+    pub fn add_tab_stop(&mut self, pos: f32) {
+        self.tabs.push(pos);
+    }
 }
 
 impl std::hash::Hash for LayoutJob {
@@ -216,6 +223,7 @@ impl std::hash::Hash for LayoutJob {
             break_on_newline,
             halign,
             justify,
+            tabs: _,
             round_output_to_gui,
         } = self;
 
