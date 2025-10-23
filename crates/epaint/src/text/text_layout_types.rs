@@ -737,7 +737,7 @@ pub struct Glyph {
     /// Only used during layout, then set to an invalid value in order to
     /// enable the paragraph-concat optimization path without having to
     /// adjust `section_index` when concatting.
-    pub(crate) section_index: u32,
+    pub section_index: u32,
 
     pub visible: bool,
 }
